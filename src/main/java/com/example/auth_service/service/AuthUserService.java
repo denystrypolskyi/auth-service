@@ -5,9 +5,14 @@ import com.example.auth_service.jwt.JwtUtil;
 import com.example.auth_service.model.AuthUser;
 import com.example.auth_service.repository.AuthUserRepository;
 
+import jakarta.transaction.Transactional;
+
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -16,19 +21,25 @@ public class AuthUserService {
     private final AuthUserRepository authUserRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
+    private final RestTemplate restTemplate;
+
+    private final String userServiceUrl = "http://localhost:8081/users";
 
     public AuthUserService(AuthUserRepository authUserRepository,
-                           PasswordEncoder passwordEncoder,
-                           JwtUtil jwtUtil) {
+            PasswordEncoder passwordEncoder,
+            JwtUtil jwtUtil, RestTemplate restTemplate) {
         this.authUserRepository = authUserRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;
+        this.restTemplate = restTemplate;
+
     }
 
     public Optional<AuthUser> findByUsername(String username) {
         return authUserRepository.findByUsername(username);
     }
 
+    @Transactional
     public AuthUser register(AuthUserDTO dto) {
         if (authUserRepository.findByUsername(dto.getUsername()).isPresent()) {
             throw new RuntimeException("User already exists");
@@ -38,7 +49,19 @@ public class AuthUserService {
         authUser.setUsername(dto.getUsername());
         authUser.setPassword(passwordEncoder.encode(dto.getPassword()));
 
-        return authUserRepository.save(authUser);
+        AuthUser savedUser = authUserRepository.save(authUser);
+
+        try {
+            Map<String, String> userPayload = new HashMap<>();
+            userPayload.put("name", dto.getUsername());
+            userPayload.put("email", dto.getEmail());
+
+            restTemplate.postForEntity(userServiceUrl, userPayload, Void.class);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to create user profile", e);
+        }
+
+        return savedUser;
     }
 
     public String login(String username, String password) {
