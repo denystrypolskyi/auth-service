@@ -1,19 +1,22 @@
 package com.example.auth_service.service;
 
-import com.example.auth_service.dto.AuthUserDTO;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Optional;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestTemplate;
+import org.springframework.web.server.ResponseStatusException;
+
+import com.example.auth_service.client.UserClient;
+import com.example.auth_service.dto.RegisterRequestDTO;
 import com.example.auth_service.jwt.JwtUtil;
 import com.example.auth_service.model.AuthUser;
 import com.example.auth_service.repository.AuthUserRepository;
 
 import jakarta.transaction.Transactional;
-
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
 
 @Service
 public class AuthUserService {
@@ -22,17 +25,18 @@ public class AuthUserService {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
     private final RestTemplate restTemplate;
+    private final UserClient userClient;
 
     private final String userServiceUrl = "http://localhost:8081/users";
 
     public AuthUserService(AuthUserRepository authUserRepository,
             PasswordEncoder passwordEncoder,
-            JwtUtil jwtUtil, RestTemplate restTemplate) {
+            JwtUtil jwtUtil, RestTemplate restTemplate, UserClient userClient) {
         this.authUserRepository = authUserRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;
         this.restTemplate = restTemplate;
-
+        this.userClient = userClient;
     }
 
     public Optional<AuthUser> findByUsername(String username) {
@@ -40,7 +44,7 @@ public class AuthUserService {
     }
 
     @Transactional
-    public AuthUser register(AuthUserDTO dto) {
+    public AuthUser register(RegisterRequestDTO dto) {
         if (authUserRepository.findByUsername(dto.getUsername()).isPresent()) {
             throw new RuntimeException("User already exists");
         }
@@ -64,13 +68,49 @@ public class AuthUserService {
         return savedUser;
     }
 
-    public String login(String username, String password) {
-        Optional<AuthUser> user = authUserRepository.findByUsername(username);
+    public Map<String, String> login(String username, String password) {
+        AuthUser user = authUserRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("Invalid credentials"));
 
-        if (user.isPresent() && passwordEncoder.matches(password, user.get().getPassword())) {
-            return jwtUtil.generateToken(username);
+        if (!passwordEncoder.matches(password, user.getPassword())) {
+            throw new RuntimeException("Invalid credentials");
         }
 
-        throw new RuntimeException("Invalid credentials");
+        String email = userClient.getUserEmailByUsername(user.getUsername())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Failed to fetch user email"));
+        String accessToken = jwtUtil.generateToken(username, email);
+        String refreshToken = jwtUtil.generateRefreshToken(username);
+
+        user.setRefreshToken(refreshToken);
+        authUserRepository.save(user);
+
+        Map<String, String> tokens = new HashMap<>();
+        tokens.put("accessToken", accessToken);
+        tokens.put("refreshToken", refreshToken);
+        return tokens;
+    }
+
+    public Map<String, String> refreshToken(String refreshToken) {
+        String username = jwtUtil.extractUsername(refreshToken);
+        AuthUser user = authUserRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (!refreshToken.equals(user.getRefreshToken()) || jwtUtil.isTokenExpired(refreshToken)) {
+            throw new RuntimeException("Invalid or expired refresh token");
+        }
+
+        String email = userClient.getUserEmailByUsername(user.getUsername())
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Failed to fetch user email"));
+
+        String newAccessToken = jwtUtil.generateToken(username, email);
+        String newRefreshToken = jwtUtil.generateRefreshToken(username);
+
+        user.setRefreshToken(newRefreshToken);
+        authUserRepository.save(user);
+
+        Map<String, String> tokens = new HashMap<>();
+        tokens.put("accessToken", newAccessToken);
+        tokens.put("refreshToken", newRefreshToken);
+        return tokens;
     }
 }

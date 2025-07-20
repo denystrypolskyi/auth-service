@@ -1,5 +1,6 @@
 package com.example.auth_service.model;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -20,4 +21,7 @@ public class AuthUser {
     private String username;
 
     private String password;
+
+    @Column(length = 500)
+    private String refreshToken;
 }
