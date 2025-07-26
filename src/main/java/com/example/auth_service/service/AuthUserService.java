@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -17,8 +18,11 @@ import com.example.auth_service.model.AuthUser;
 import com.example.auth_service.repository.AuthUserRepository;
 
 import jakarta.transaction.Transactional;
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 @Service
+@RequiredArgsConstructor
 public class AuthUserService {
 
     private final AuthUserRepository authUserRepository;
@@ -27,17 +31,8 @@ public class AuthUserService {
     private final RestTemplate restTemplate;
     private final UserClient userClient;
 
-    private final String userServiceUrl = "http://localhost:8081/users";
-
-    public AuthUserService(AuthUserRepository authUserRepository,
-            PasswordEncoder passwordEncoder,
-            JwtUtil jwtUtil, RestTemplate restTemplate, UserClient userClient) {
-        this.authUserRepository = authUserRepository;
-        this.passwordEncoder = passwordEncoder;
-        this.jwtUtil = jwtUtil;
-        this.restTemplate = restTemplate;
-        this.userClient = userClient;
-    }
+    @Value("${user.service.url}")
+    private String userServiceUrl;
 
     public Optional<AuthUser> findByUsername(String username) {
         return authUserRepository.findByUsername(username);

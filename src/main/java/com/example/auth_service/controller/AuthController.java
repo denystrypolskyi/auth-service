@@ -15,16 +15,16 @@ import com.example.auth_service.model.AuthUser;
 import com.example.auth_service.service.AuthUserService;
 
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/auth")
+@RequiredArgsConstructor
 public class AuthController {
 
     private final AuthUserService authUserService;
 
-    public AuthController(AuthUserService authUserService) {
-        this.authUserService = authUserService;
-    }
+
 
     @PostMapping("/register")
     public ResponseEntity<?> register(@Valid @RequestBody RegisterRequestDTO registerRequest) {
@@ -37,7 +37,7 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginRequestDTO loginRequest) {
+    public ResponseEntity<?> login(@Valid @RequestBody LoginRequestDTO loginRequest) {
         try {
             Map<String, String> tokens = authUserService.login(loginRequest.getUsername(), loginRequest.getPassword());
             return ResponseEntity.ok(tokens);
