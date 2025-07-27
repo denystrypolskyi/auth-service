@@ -20,6 +20,8 @@ public class AuthUser {
 
     private String username;
 
+    private String email;
+
     private String password;
 
     @Column(length = 500)

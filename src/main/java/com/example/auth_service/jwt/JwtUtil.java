@@ -14,12 +14,13 @@ public class JwtUtil {
     private static final long ACCESS_TOKEN_EXPIRATION_MS = 86400000; // 1 day
     private static final long REFRESH_TOKEN_EXPIRATION_MS = 604800000; // 7 days
 
-    private final Key key = Keys.hmacShaKeyFor("supersecuresecretkeyofatleast32bytes".getBytes());
+    private final Key key = Keys.hmacShaKeyFor("supersecuresecretkeyofatleast32bytes".getBytes()); // Move key to environment variable
 
-    public String generateToken(String username, String email) {
+    public String generateToken(String username, String email, Long userId) {
         return Jwts.builder()
                 .subject(username)
                 .claim("email", email)
+                .claim("userId", userId)
                 .issuedAt(new Date())
                 .expiration(new Date(System.currentTimeMillis() + ACCESS_TOKEN_EXPIRATION_MS))
                 .signWith(key)
