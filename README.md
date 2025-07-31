@@ -19,13 +19,11 @@ This is the authentication and authorization microservice for the microservices-
 | POST   | `/auth/refresh`   | Refresh JWT tokens using a valid refresh token | No                           |
 | GET    | `/auth/all`       | Get a list of all registered users              | Yes |
 
-> ⚠️ Currently, any authenticated user can access the `/auth/all` endpoint. In production, role-based access checks would be added to restrict access to this endpoint.
-
 ## 🛡 Security
 
 - Passwords are securely hashed before storage.
 - JWT-based authentication with access and refresh tokens.
-- Custom `@Authenticated` annotation is used to protect sensitive endpoints.
+- In production, role-based access control would be added to restrict sensitive operations.
 
 ## 📦 Tech Stack
 
