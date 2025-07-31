@@ -4,33 +4,34 @@ This is the authentication and authorization microservice for the microservices-
 
 ## 🚀 Features
 
-- **User registration**  
-  `POST /auth/register` — Create a new user account with username, email, and password.
+- User registration — allows creating new user accounts with username, email, and password.
+- User login — authenticates users and issues access and refresh JWT tokens.
+- Token refresh — accepts a refresh token and returns a new access/refresh token pair.
+- User management — provides access to a list of all registered users.
+- JWT-based authentication.
 
-- **User login**  
-  `POST /auth/login` — Authenticates user and returns access & refresh tokens.
+## 📌 Endpoints
 
-- **Token refresh**  
-  `POST /auth/refresh` — Accepts a refresh token and returns a new token pair.
+| Method | Endpoint          | Description                                      | Authentication Required                          |
+|--------|-------------------|------------------------------------------------|----------------------------------|
+| POST   | `/auth/register`  | Register a new user account                      | No                           |
+| POST   | `/auth/login`     | Authenticate user and obtain access & refresh tokens | No                           |
+| POST   | `/auth/refresh`   | Refresh JWT tokens using a valid refresh token | No                           |
+| GET    | `/auth/all`       | Get a list of all registered users              | Yes |
 
-- **Get all users**  
-  `GET /auth/all` — Returns a list of all registered users.  
-  🔒 Protected with custom `@Authenticated` annotation.  
-  ⚠️ Currently, no role-based access is enforced — any authenticated user can access this endpoint.
+> ⚠️ Currently, any authenticated user can access the `/auth/all` endpoint. In production, role-based access checks would be added to restrict access to this endpoint.
 
 ## 🛡 Security
 
 - Passwords are securely hashed before storage.
 - JWT-based authentication with access and refresh tokens.
 - Custom `@Authenticated` annotation is used to protect sensitive endpoints.
-- In a production setup, role-based access control should be added to restrict admin-only endpoints like `/auth/all`.
 
 ## 📦 Tech Stack
 
-- Java 24
-- Spring Boot
-- Spring Security (JWT)
-- PostgreSQL
-- Lombok
-- Jakarta Validation
-
+- Java 24  
+- Spring Boot  
+- Spring Security (JWT)  
+- PostgreSQL  
+- Lombok  
+- Jakarta Validation  
