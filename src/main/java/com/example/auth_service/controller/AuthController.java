@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.auth_service.dto.LoginRequestDTO;
 import com.example.auth_service.dto.RegisterRequestDTO;
 import com.example.auth_service.model.AuthUser;
+import com.example.auth_service.security.Authenticated;
 import com.example.auth_service.service.AuthUserService;
 
 import jakarta.validation.Valid;
@@ -26,6 +27,7 @@ public class AuthController {
 
     private final AuthUserService authUserService;
 
+    @Authenticated
     @GetMapping("/all")
     public ResponseEntity<?> getAllUsers() {
         return ResponseEntity.ok(authUserService.getAllUsers());

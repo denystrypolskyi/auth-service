@@ -5,6 +5,7 @@ import java.util.Date;
 
 import org.springframework.stereotype.Component;
 
+import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 
@@ -14,7 +15,9 @@ public class JwtUtil {
     private static final long ACCESS_TOKEN_EXPIRATION_MS = 86400000; // 1 day
     private static final long REFRESH_TOKEN_EXPIRATION_MS = 604800000; // 7 days
 
-    private final Key key = Keys.hmacShaKeyFor("supersecuresecretkeyofatleast32bytes".getBytes()); // Move key to environment variable
+    private final Key key = Keys.hmacShaKeyFor("supersecuresecretkeyofatleast32bytes".getBytes()); // Move key to
+                                                                                                   // environment
+                                                                                                   // variable
 
     public String generateToken(String username, String email, Long userId) {
         return Jwts.builder()
@@ -48,5 +51,29 @@ public class JwtUtil {
     public boolean isTokenExpired(String token) {
         return Jwts.parser().setSigningKey(key).build().parseClaimsJws(token)
                 .getBody().getExpiration().before(new Date());
+    }
+
+    public Claims extractAllClaims(String token) {
+        return Jwts.parser()
+                .setSigningKey(key)
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
+    }
+
+    public Long extractUserId(String token) {
+        Object id = extractAllClaims(token).get("userId");
+        if (id instanceof Integer) {
+            return ((Integer) id).longValue();
+        } else if (id instanceof Long) {
+            return (Long) id;
+        } else if (id instanceof String) {
+            try {
+                return Long.parseLong((String) id);
+            } catch (NumberFormatException e) {
+                return null;
+            }
+        }
+        return null;
     }
 }
