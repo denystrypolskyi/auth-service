@@ -1,35 +1,64 @@
 # Auth Service
 
-This is the authentication and authorization microservice for the microservices-based project. It handles user registration, login, token generation, and user identity management.
+Authentication service for the distributed backend system. It handles user registration, login, refresh tokens, and JWT generation used by the other services.
 
-## 🚀 Features
+## Tech Stack
 
-- User registration — allows creating new user accounts with username, email, and password.
-- User login — authenticates users and issues access and refresh JWT tokens.
-- Token refresh — accepts a refresh token and returns a new access/refresh token pair.
-- User management — provides access to a list of all registered users.
-- JWT-based authentication.
+- Java 21
+- Spring Boot
+- Spring Web
+- Spring Security
+- Spring Data JPA
+- PostgreSQL
+- Flyway
+- Bean Validation
+- JUnit, Mockito, MockMvc
 
-## 📌 Endpoints
+## API
 
-| Method | Endpoint          | Description                                      | Authentication Required                          |
-|--------|-------------------|------------------------------------------------|----------------------------------|
-| POST   | `/auth/register`  | Register a new user account                      | No                           |
-| POST   | `/auth/login`     | Authenticate user and obtain access & refresh tokens | No                           |
-| POST   | `/auth/refresh`   | Refresh JWT tokens using a valid refresh token | No                           |
-| GET    | `/auth/all`       | Get a list of all registered users              | Yes |
+| Method | Endpoint | Auth | Description |
+| --- | --- | --- | --- |
+| `POST` | `/auth/register` | No | Register a new user |
+| `POST` | `/auth/login` | No | Authenticate and return access/refresh tokens |
+| `POST` | `/auth/refresh` | No | Issue a new access/refresh token pair |
+| `GET` | `/auth/all` | Yes | Return registered users without passwords or refresh tokens |
 
-## 🛡 Security
+### Register Request
 
-- Passwords are securely hashed before storage.
-- JWT-based authentication with access and refresh tokens.
-- In production, role-based access control would be added to restrict sensitive operations.
+```json
+{
+  "username": "demo",
+  "password": "password",
+  "email": "demo@example.com"
+}
+```
 
-## 📦 Tech Stack
+### Login Request
 
-- Java 24  
-- Spring Boot  
-- Spring Security (JWT)  
-- PostgreSQL  
-- Lombok  
-- Jakarta Validation  
+```json
+{
+  "username": "demo",
+  "password": "password"
+}
+```
+
+### Token Response
+
+```json
+{
+  "accessToken": "...",
+  "refreshToken": "..."
+}
+```
+
+## Notes
+
+- Passwords are stored as BCrypt hashes.
+- JWT secret is configured through `JWT_SECRET`.
+- API errors are returned through a centralized exception handler.
+
+## Run Tests
+
+```powershell
+.\mvnw.cmd test
+```
