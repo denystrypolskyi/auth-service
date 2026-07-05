@@ -3,6 +3,7 @@ package com.example.auth_service.jwt;
 import java.security.Key;
 import java.util.Date;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import io.jsonwebtoken.Claims;
@@ -15,9 +16,11 @@ public class JwtUtil {
     private static final long ACCESS_TOKEN_EXPIRATION_MS = 86400000; // 1 day
     private static final long REFRESH_TOKEN_EXPIRATION_MS = 604800000; // 7 days
 
-    private final Key key = Keys.hmacShaKeyFor("supersecuresecretkeyofatleast32bytes".getBytes()); // Move key to
-                                                                                                   // environment
-                                                                                                   // variable
+    private final Key key;
+
+    public JwtUtil(@Value("${jwt.secret}") String secret) {
+        this.key = Keys.hmacShaKeyFor(secret.getBytes());
+    }
 
     public String generateToken(String username, String email, Long userId) {
         return Jwts.builder()

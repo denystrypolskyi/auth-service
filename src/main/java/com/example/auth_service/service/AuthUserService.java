@@ -6,7 +6,9 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import com.example.auth_service.dto.RegisterRequestDTO;
 import com.example.auth_service.jwt.JwtUtil;
@@ -35,7 +37,7 @@ public class AuthUserService {
     @Transactional
     public AuthUser register(RegisterRequestDTO dto) {
         if (authUserRepository.findByUsername(dto.getUsername()).isPresent()) {
-            throw new RuntimeException("User already exists");
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "User already exists");
         }
 
         AuthUser authUser = new AuthUser();
@@ -48,10 +50,10 @@ public class AuthUserService {
 
     public Map<String, String> login(String username, String password) {
         AuthUser user = authUserRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("Invalid credentials"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials"));
 
         if (!passwordEncoder.matches(password, user.getPassword())) {
-            throw new RuntimeException("Invalid credentials");
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid credentials");
         }
 
         String accessToken = jwtUtil.generateToken(username, user.getEmail(), user.getId());
@@ -67,12 +69,16 @@ public class AuthUserService {
     }
 
     public Map<String, String> refreshToken(String refreshToken) {
+        if (refreshToken == null || refreshToken.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Refresh token is required");
+        }
+
         String username = jwtUtil.extractUsername(refreshToken);
         AuthUser user = authUserRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User not found"));
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid refresh token"));
 
         if (!refreshToken.equals(user.getRefreshToken()) || jwtUtil.isTokenExpired(refreshToken)) {
-            throw new RuntimeException("Invalid or expired refresh token");
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid or expired refresh token");
         }
 
         String newAccessToken = jwtUtil.generateToken(username, user.getEmail(), user.getId());
