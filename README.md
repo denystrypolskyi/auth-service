@@ -1,6 +1,6 @@
 # Auth Service
 
-Authentication service for the distributed backend system. It handles user registration, login, refresh tokens, and JWT generation used by the other services.
+Authentication service for the e-commerce backend. It handles user registration, login, refresh tokens, and JWT generation used by the other services.
 
 ## Tech Stack
 
