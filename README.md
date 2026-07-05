@@ -21,7 +21,7 @@ Authentication service for the e-commerce backend. It handles user registration,
 | `POST` | `/auth/register` | No | Register a new user |
 | `POST` | `/auth/login` | No | Authenticate and return access/refresh tokens |
 | `POST` | `/auth/refresh` | No | Issue a new access/refresh token pair |
-| `GET` | `/auth/all` | Yes | Return registered users without passwords or refresh tokens |
+| `GET` | `/auth/all` | Yes | List registered users |
 
 ### Register Request
 
@@ -54,8 +54,7 @@ Authentication service for the e-commerce backend. It handles user registration,
 ## Notes
 
 - Passwords are stored as BCrypt hashes.
-- JWT secret is configured through `JWT_SECRET`.
-- API errors are returned through a centralized exception handler.
+- Access and refresh tokens are signed with `JWT_SECRET`.
 
 ## Run Tests
 
